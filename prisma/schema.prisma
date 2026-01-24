@@ -1,0 +1,409 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// MULTI-TENANT : WORKSPACE
+// ============================================
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+
+  // Paramètres Go/No-Go
+  goNoGoThreshold Int @default(15) // Seuil sur 25 points (5 critères x 5 points)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  members      WorkspaceMember[]
+  dossiers     Dossier[]
+  preuves      Preuve[]
+  auditEvents  AuditEvent[]
+}
+
+// ============================================
+// UTILISATEURS ET RÔLES
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  workspaces    WorkspaceMember[]
+  assignedTasks Tache[]           @relation("AssignedTo")
+  auditEvents   AuditEvent[]
+  exigences     Exigence[]        @relation("ExigenceOwner")
+  checklistItems ChecklistItem[]  @relation("ChecklistOwner")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+model WorkspaceMember {
+  id          String    @id @default(cuid())
+  role        Role      @default(VIEWER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+}
+
+// ============================================
+// DOSSIER (APPEL D'OFFRES)
+// ============================================
+
+enum DossierStatus {
+  BROUILLON
+  EN_ANALYSE
+  GO
+  NO_GO
+  EN_PRODUCTION
+  DEPOSE
+  ARCHIVE
+}
+
+model Dossier {
+  id              String        @id @default(cuid())
+  reference       String        // Référence interne
+  titre           String
+  client          String        // Nom du donneur d'ordre
+  description     String?
+  datePublication DateTime?
+  dateLimite      DateTime?
+  montantEstime   Float?
+  status          DossierStatus @default(BROUILLON)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  workspaceId     String
+  workspace       Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  dces            DCE[]
+  exigences       Exigence[]
+  goNoGoDecisions GoNoGoDecision[]
+  checklistItems  ChecklistItem[]
+  taches          Tache[]
+  memoireTechnique MemoireTechnique?
+  exports         Export[]
+  dossierPreuves  DossierPreuve[]
+
+  @@index([workspaceId])
+}
+
+// ============================================
+// DCE (DOCUMENT DE CONSULTATION)
+// ============================================
+
+model DCE {
+  id            String   @id @default(cuid())
+  filename      String
+  originalName  String
+  mimeType      String
+  size          Int
+  storagePath   String
+  extractedText String?  @db.Text
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  dossierId String
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  @@index([dossierId])
+}
+
+// ============================================
+// EXIGENCES
+// ============================================
+
+enum ExigencePriority {
+  HAUTE
+  MOYENNE
+  BASSE
+}
+
+enum ExigenceStatus {
+  A_TRAITER
+  EN_COURS
+  TRAITE
+  NON_APPLICABLE
+}
+
+model Exigence {
+  id          String           @id @default(cuid())
+  ordre       Int              @default(0)
+  titre       String
+  description String?          @db.Text
+  priority    ExigencePriority @default(MOYENNE)
+  status      ExigenceStatus   @default(A_TRAITER)
+  source      String?          // Référence dans le DCE
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  dossierId String
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  ownerId   String?
+  owner     User?   @relation("ExigenceOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([dossierId])
+}
+
+// ============================================
+// GO / NO-GO
+// ============================================
+
+model GoNoGoDecision {
+  id              String   @id @default(cuid())
+
+  // Critères notés de 0 à 5
+  critereFitStrategique    Int // Adéquation stratégique
+  critereCapacite          Int // Capacité à répondre
+  critereRentabilite       Int // Rentabilité potentielle
+  critereDelai             Int // Délai réaliste
+  critereRisque            Int // Niveau de risque acceptable (5 = faible risque)
+
+  scoreTotal    Int      // Somme des critères
+  decision      Boolean  // true = GO, false = NO-GO
+  motifNoGo     String?  @db.Text // Obligatoire si NO-GO
+  commentaire   String?  @db.Text
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  dossierId String
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  @@index([dossierId])
+}
+
+// ============================================
+// CONFORMITÉ (CHECKLIST)
+// ============================================
+
+enum ChecklistStatus {
+  A_VERIFIER
+  CONFORME
+  NON_CONFORME
+  NON_APPLICABLE
+}
+
+model ChecklistItem {
+  id          String          @id @default(cuid())
+  ordre       Int             @default(0)
+  label       String
+  description String?
+  status      ChecklistStatus @default(A_VERIFIER)
+  commentaire String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  dossierId String
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  ownerId   String?
+  owner     User?   @relation("ChecklistOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([dossierId])
+}
+
+// ============================================
+// TÂCHES
+// ============================================
+
+enum TacheStatus {
+  A_FAIRE
+  EN_COURS
+  TERMINE
+  BLOQUE
+}
+
+enum TachePriority {
+  HAUTE
+  MOYENNE
+  BASSE
+}
+
+model Tache {
+  id          String       @id @default(cuid())
+  titre       String
+  description String?      @db.Text
+  status      TacheStatus  @default(A_FAIRE)
+  priority    TachePriority @default(MOYENNE)
+  echeance    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  dossierId   String
+  dossier     Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  assigneeId  String?
+  assignee    User?   @relation("AssignedTo", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@index([dossierId])
+}
+
+// ============================================
+// PREUVES (BIBLIOTHÈQUE RÉUTILISABLE)
+// ============================================
+
+enum PreuveType {
+  REFERENCE
+  CV
+  CERTIFICATION
+  DOCUMENT
+  AUTRE
+}
+
+model Preuve {
+  id          String     @id @default(cuid())
+  titre       String
+  description String?    @db.Text
+  type        PreuveType @default(DOCUMENT)
+  tags        String[]   // Tags pour recherche
+
+  // Fichier optionnel
+  filename    String?
+  storagePath String?
+  mimeType    String?
+
+  // Contenu texte (pour les preuves sans fichier)
+  contenu     String?    @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  workspaceId    String
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  dossierPreuves DossierPreuve[]
+
+  @@index([workspaceId])
+}
+
+// Table de liaison Dossier <-> Preuve
+model DossierPreuve {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  dossierId String
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  preuveId  String
+  preuve    Preuve  @relation(fields: [preuveId], references: [id], onDelete: Cascade)
+
+  @@unique([dossierId, preuveId])
+}
+
+// ============================================
+// MÉMOIRE TECHNIQUE
+// ============================================
+
+model MemoireTechnique {
+  id String @id @default(cuid())
+
+  // Sections fixes en Markdown
+  sectionPresentation   String? @db.Text // Présentation de l'entreprise
+  sectionComprehension  String? @db.Text // Compréhension du besoin
+  sectionMethodologie   String? @db.Text // Méthodologie proposée
+  sectionEquipe         String? @db.Text // Équipe dédiée
+  sectionReferences     String? @db.Text // Références similaires
+  sectionPlanning       String? @db.Text // Planning prévisionnel
+  sectionEngagements    String? @db.Text // Engagements qualité
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  dossierId String  @unique
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// EXPORTS
+// ============================================
+
+enum ExportType {
+  MEMOIRE_PDF
+  CHECKLIST_PDF
+  SYNTHESE_PDF
+}
+
+model Export {
+  id          String     @id @default(cuid())
+  type        ExportType
+  filename    String
+  storagePath String
+  version     Int        @default(1)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  dossierId String
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  @@index([dossierId])
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  EXPORT
+  LOGIN
+  GO_DECISION
+  NOGO_DECISION
+}
+
+model AuditEvent {
+  id          String      @id @default(cuid())
+  action      AuditAction
+  entityType  String      // Nom de l'entité (Dossier, Preuve, etc.)
+  entityId    String?
+  description String
+  metadata    Json?       // Données additionnelles
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([createdAt])
+}
