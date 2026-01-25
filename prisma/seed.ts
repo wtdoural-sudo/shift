@@ -84,14 +84,14 @@ async function main() {
       titre: "Certification ISO 9001:2015",
       description: "Certification qualité obtenue en 2022, renouvelée en 2023",
       type: "CERTIFICATION" as const,
-      tags: ["qualité", "iso9001", "certification"],
+      tags: "qualité,iso9001,certification",
       workspaceId: workspace.id,
     },
     {
       titre: "CV - Jean Dupont, Directeur de projet",
       description: "15 ans d'expérience en gestion de projets complexes",
       type: "CV" as const,
-      tags: ["cv", "direction", "gestion-projet"],
+      tags: "cv,direction,gestion-projet",
       contenu: `## Jean Dupont
 **Directeur de projet senior**
 
@@ -109,7 +109,7 @@ async function main() {
       titre: "Référence - Ministère de la Culture 2023",
       description: "Refonte de l'identité visuelle et création de supports de communication",
       type: "REFERENCE" as const,
-      tags: ["référence", "ministère", "identité-visuelle"],
+      tags: "référence,ministère,identité-visuelle",
       contenu: `## Projet : Refonte identité visuelle
 **Client** : Ministère de la Culture
 **Année** : 2023

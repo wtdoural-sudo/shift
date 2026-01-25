@@ -8,7 +8,7 @@ const updatePreuveSchema = z.object({
   titre: z.string().min(1).optional(),
   description: z.string().optional().nullable(),
   type: z.enum(["REFERENCE", "CV", "CERTIFICATION", "DOCUMENT", "AUTRE"]).optional(),
-  tags: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional().transform((v) => v ? v.join(",") : undefined),
   contenu: z.string().optional().nullable(),
 })
 

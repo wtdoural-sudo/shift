@@ -29,7 +29,7 @@ export async function logAuditEvent({
         description,
         userId,
         workspaceId,
-        metadata: metadata ?? undefined,
+        metadata: metadata ? JSON.stringify(metadata) : undefined,
       },
     })
   } catch (error) {

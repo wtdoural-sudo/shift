@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // ============================================
@@ -17,13 +17,11 @@ model Workspace {
   slug        String   @unique
   description String?
 
-  // Paramètres Go/No-Go
-  goNoGoThreshold Int @default(15) // Seuil sur 25 points (5 critères x 5 points)
+  goNoGoThreshold Int @default(15)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   members      WorkspaceMember[]
   dossiers     Dossier[]
   preuves      Preuve[]
@@ -44,7 +42,6 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   workspaces    WorkspaceMember[]
   assignedTasks Tache[]           @relation("AssignedTo")
   auditEvents   AuditEvent[]
@@ -52,20 +49,14 @@ model User {
   checklistItems ChecklistItem[]  @relation("ChecklistOwner")
 }
 
-enum Role {
-  ADMIN
-  EDITOR
-  VIEWER
-}
-
+// Role: ADMIN, EDITOR, VIEWER
 model WorkspaceMember {
   id          String    @id @default(cuid())
-  role        Role      @default(VIEWER)
+  role        String    @default("VIEWER")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspaceId String
@@ -78,31 +69,21 @@ model WorkspaceMember {
 // DOSSIER (APPEL D'OFFRES)
 // ============================================
 
-enum DossierStatus {
-  BROUILLON
-  EN_ANALYSE
-  GO
-  NO_GO
-  EN_PRODUCTION
-  DEPOSE
-  ARCHIVE
-}
-
+// Status: BROUILLON, EN_ANALYSE, GO, NO_GO, EN_PRODUCTION, DEPOSE, ARCHIVE
 model Dossier {
-  id              String        @id @default(cuid())
-  reference       String        // Référence interne
+  id              String    @id @default(cuid())
+  reference       String
   titre           String
-  client          String        // Nom du donneur d'ordre
+  client          String
   description     String?
   datePublication DateTime?
   dateLimite      DateTime?
   montantEstime   Float?
-  status          DossierStatus @default(BROUILLON)
+  status          String    @default("BROUILLON")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   workspaceId     String
   workspace       Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   dces            DCE[]
@@ -118,7 +99,7 @@ model Dossier {
 }
 
 // ============================================
-// DCE (DOCUMENT DE CONSULTATION)
+// DCE
 // ============================================
 
 model DCE {
@@ -128,11 +109,10 @@ model DCE {
   mimeType      String
   size          Int
   storagePath   String
-  extractedText String?  @db.Text
+  extractedText String?
 
   createdAt DateTime @default(now())
 
-  // Relations
   dossierId String
   dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
 
@@ -143,32 +123,20 @@ model DCE {
 // EXIGENCES
 // ============================================
 
-enum ExigencePriority {
-  HAUTE
-  MOYENNE
-  BASSE
-}
-
-enum ExigenceStatus {
-  A_TRAITER
-  EN_COURS
-  TRAITE
-  NON_APPLICABLE
-}
-
+// Priority: HAUTE, MOYENNE, BASSE
+// Status: A_TRAITER, EN_COURS, TRAITE, NON_APPLICABLE
 model Exigence {
-  id          String           @id @default(cuid())
-  ordre       Int              @default(0)
+  id          String @id @default(cuid())
+  ordre       Int    @default(0)
   titre       String
-  description String?          @db.Text
-  priority    ExigencePriority @default(MOYENNE)
-  status      ExigenceStatus   @default(A_TRAITER)
-  source      String?          // Référence dans le DCE
+  description String?
+  priority    String @default("MOYENNE")
+  status      String @default("A_TRAITER")
+  source      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   dossierId String
   dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
   ownerId   String?
@@ -182,23 +150,21 @@ model Exigence {
 // ============================================
 
 model GoNoGoDecision {
-  id              String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  // Critères notés de 0 à 5
-  critereFitStrategique    Int // Adéquation stratégique
-  critereCapacite          Int // Capacité à répondre
-  critereRentabilite       Int // Rentabilité potentielle
-  critereDelai             Int // Délai réaliste
-  critereRisque            Int // Niveau de risque acceptable (5 = faible risque)
+  critereFitStrategique Int
+  critereCapacite       Int
+  critereRentabilite    Int
+  critereDelai          Int
+  critereRisque         Int
 
-  scoreTotal    Int      // Somme des critères
-  decision      Boolean  // true = GO, false = NO-GO
-  motifNoGo     String?  @db.Text // Obligatoire si NO-GO
-  commentaire   String?  @db.Text
+  scoreTotal  Int
+  decision    Boolean
+  motifNoGo   String?
+  commentaire String?
 
   createdAt DateTime @default(now())
 
-  // Relations
   dossierId String
   dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
 
@@ -206,28 +172,21 @@ model GoNoGoDecision {
 }
 
 // ============================================
-// CONFORMITÉ (CHECKLIST)
+// CONFORMITÉ
 // ============================================
 
-enum ChecklistStatus {
-  A_VERIFIER
-  CONFORME
-  NON_CONFORME
-  NON_APPLICABLE
-}
-
+// Status: A_VERIFIER, CONFORME, NON_CONFORME, NON_APPLICABLE
 model ChecklistItem {
-  id          String          @id @default(cuid())
-  ordre       Int             @default(0)
+  id          String @id @default(cuid())
+  ordre       Int    @default(0)
   label       String
   description String?
-  status      ChecklistStatus @default(A_VERIFIER)
+  status      String @default("A_VERIFIER")
   commentaire String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   dossierId String
   dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
   ownerId   String?
@@ -240,70 +199,47 @@ model ChecklistItem {
 // TÂCHES
 // ============================================
 
-enum TacheStatus {
-  A_FAIRE
-  EN_COURS
-  TERMINE
-  BLOQUE
-}
-
-enum TachePriority {
-  HAUTE
-  MOYENNE
-  BASSE
-}
-
+// Status: A_FAIRE, EN_COURS, TERMINE, BLOQUE
+// Priority: HAUTE, MOYENNE, BASSE
 model Tache {
-  id          String       @id @default(cuid())
+  id          String    @id @default(cuid())
   titre       String
-  description String?      @db.Text
-  status      TacheStatus  @default(A_FAIRE)
-  priority    TachePriority @default(MOYENNE)
+  description String?
+  status      String    @default("A_FAIRE")
+  priority    String    @default("MOYENNE")
   echeance    DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  dossierId   String
-  dossier     Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
-  assigneeId  String?
-  assignee    User?   @relation("AssignedTo", fields: [assigneeId], references: [id], onDelete: SetNull)
+  dossierId  String
+  dossier    Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  assigneeId String?
+  assignee   User?   @relation("AssignedTo", fields: [assigneeId], references: [id], onDelete: SetNull)
 
   @@index([dossierId])
 }
 
 // ============================================
-// PREUVES (BIBLIOTHÈQUE RÉUTILISABLE)
+// PREUVES
 // ============================================
 
-enum PreuveType {
-  REFERENCE
-  CV
-  CERTIFICATION
-  DOCUMENT
-  AUTRE
-}
-
+// Type: REFERENCE, CV, CERTIFICATION, DOCUMENT, AUTRE
 model Preuve {
-  id          String     @id @default(cuid())
+  id          String @id @default(cuid())
   titre       String
-  description String?    @db.Text
-  type        PreuveType @default(DOCUMENT)
-  tags        String[]   // Tags pour recherche
+  description String?
+  type        String @default("DOCUMENT")
+  tags        String @default("")
 
-  // Fichier optionnel
   filename    String?
   storagePath String?
   mimeType    String?
-
-  // Contenu texte (pour les preuves sans fichier)
-  contenu     String?    @db.Text
+  contenu     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   workspaceId    String
   workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   dossierPreuves DossierPreuve[]
@@ -311,7 +247,6 @@ model Preuve {
   @@index([workspaceId])
 }
 
-// Table de liaison Dossier <-> Preuve
 model DossierPreuve {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -331,19 +266,17 @@ model DossierPreuve {
 model MemoireTechnique {
   id String @id @default(cuid())
 
-  // Sections fixes en Markdown
-  sectionPresentation   String? @db.Text // Présentation de l'entreprise
-  sectionComprehension  String? @db.Text // Compréhension du besoin
-  sectionMethodologie   String? @db.Text // Méthodologie proposée
-  sectionEquipe         String? @db.Text // Équipe dédiée
-  sectionReferences     String? @db.Text // Références similaires
-  sectionPlanning       String? @db.Text // Planning prévisionnel
-  sectionEngagements    String? @db.Text // Engagements qualité
+  sectionPresentation  String?
+  sectionComprehension String?
+  sectionMethodologie  String?
+  sectionEquipe        String?
+  sectionReferences    String?
+  sectionPlanning      String?
+  sectionEngagements   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   dossierId String  @unique
   dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
 }
@@ -352,22 +285,16 @@ model MemoireTechnique {
 // EXPORTS
 // ============================================
 
-enum ExportType {
-  MEMOIRE_PDF
-  CHECKLIST_PDF
-  SYNTHESE_PDF
-}
-
+// Type: MEMOIRE_PDF, CHECKLIST_PDF, SYNTHESE_PDF
 model Export {
-  id          String     @id @default(cuid())
-  type        ExportType
+  id          String @id @default(cuid())
+  type        String
   filename    String
   storagePath String
-  version     Int        @default(1)
+  version     Int    @default(1)
 
   createdAt DateTime @default(now())
 
-  // Relations
   dossierId String
   dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
 
@@ -378,27 +305,17 @@ model Export {
 // AUDIT LOG
 // ============================================
 
-enum AuditAction {
-  CREATE
-  UPDATE
-  DELETE
-  EXPORT
-  LOGIN
-  GO_DECISION
-  NOGO_DECISION
-}
-
+// Action: CREATE, UPDATE, DELETE, EXPORT, LOGIN, GO_DECISION, NOGO_DECISION
 model AuditEvent {
-  id          String      @id @default(cuid())
-  action      AuditAction
-  entityType  String      // Nom de l'entité (Dossier, Preuve, etc.)
+  id          String @id @default(cuid())
+  action      String
+  entityType  String
   entityId    String?
   description String
-  metadata    Json?       // Données additionnelles
+  metadata    String?
 
   createdAt DateTime @default(now())
 
-  // Relations
   userId      String?
   user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   workspaceId String

@@ -22,12 +22,12 @@ export const GET = withAuth(async (req, { workspaceId }) => {
     where: {
       workspaceId,
       ...(type ? { type: type as any } : {}),
-      ...(tag ? { tags: { has: tag } } : {}),
+      ...(tag ? { tags: { contains: tag } } : {}),
       ...(search
         ? {
             OR: [
-              { titre: { contains: search, mode: "insensitive" } },
-              { description: { contains: search, mode: "insensitive" } },
+              { titre: { contains: search } },
+              { description: { contains: search } },
             ],
           }
         : {}),
@@ -57,7 +57,7 @@ export const POST = withAuth(async (req, { workspaceId, session }) => {
     return apiError("Titre requis")
   }
 
-  const tags = tagsRaw ? JSON.parse(tagsRaw) : []
+  const tags = tagsRaw ? JSON.parse(tagsRaw).join(",") : ""
 
   let fileData = {}
 

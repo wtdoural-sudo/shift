@@ -308,7 +308,7 @@ function PreuveDialog({
     // Traiter les tags
     const tagsInput = formData.get("tags") as string
     const tags = tagsInput
-      ? tagsInput.split(",").map((t) => t.trim()).filter(Boolean)
+      ? tagsInput.split(",").map((t: string) => t.trim()).filter(Boolean)
       : []
     formData.set("tags", JSON.stringify(tags))
 
@@ -438,7 +438,7 @@ function PreuveEditDialog({
     setLoading(true)
 
     const tags = formData.tags
-      ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
+      ? formData.tags.split(",").map((t: string) => t.trim()).filter(Boolean)
       : []
 
     await onSubmit({
