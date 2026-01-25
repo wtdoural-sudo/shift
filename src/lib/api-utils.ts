@@ -2,16 +2,31 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "./auth"
 import { prisma } from "./prisma"
-import { Session } from "next-auth"
 
 // Role type (SQLite uses strings instead of enums)
 type Role = "ADMIN" | "EDITOR" | "VIEWER"
+
+// Session type with user
+interface AppSession {
+  user: {
+    id: string
+    email: string
+    firstName: string
+    lastName: string
+    workspaces: {
+      id: string
+      name: string
+      slug: string
+      role: Role
+    }[]
+  }
+}
 
 export type ApiHandler = (
   req: NextRequest,
   context: {
     params: Record<string, string>
-    session: Session
+    session: AppSession
     workspaceId: string
     userRole: Role
   }
@@ -72,7 +87,7 @@ export function withAuth(handler: ApiHandler, requiredRoles?: Role[]) {
 
       return handler(req, {
         params: context.params,
-        session: session as Session,
+        session: session as AppSession,
         workspaceId,
         userRole,
       })
