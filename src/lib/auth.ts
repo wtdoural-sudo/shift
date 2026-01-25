@@ -3,6 +3,9 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import { prisma } from "./prisma"
 
+// Role type (SQLite uses strings instead of enums)
+type Role = "ADMIN" | "EDITOR" | "VIEWER"
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
@@ -52,7 +55,7 @@ export const authOptions: NextAuthOptions = {
             id: m.workspace.id,
             name: m.workspace.name,
             slug: m.workspace.slug,
-            role: m.role,
+            role: m.role as Role,
           })),
         }
       },
