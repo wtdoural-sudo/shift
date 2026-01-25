@@ -1,5 +1,7 @@
 import { prisma } from "./prisma"
-import { AuditAction } from "@prisma/client"
+
+// AuditAction type (SQLite uses strings instead of enums)
+type AuditAction = "CREATE" | "UPDATE" | "DELETE" | "VIEW" | "EXPORT" | "LOGIN" | "LOGOUT"
 
 interface AuditLogParams {
   action: AuditAction

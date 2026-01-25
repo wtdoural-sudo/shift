@@ -1,5 +1,7 @@
-import { Role } from "@prisma/client"
 import "next-auth"
+
+// Role type (SQLite uses strings instead of enums)
+type Role = "ADMIN" | "EDITOR" | "VIEWER"
 
 declare module "next-auth" {
   interface User {

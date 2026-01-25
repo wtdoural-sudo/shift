@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "./auth"
 import { prisma } from "./prisma"
-import { Role } from "@prisma/client"
+import { Session } from "next-auth"
+
+// Role type (SQLite uses strings instead of enums)
+type Role = "ADMIN" | "EDITOR" | "VIEWER"
 
 export type ApiHandler = (
   req: NextRequest,
   context: {
     params: Record<string, string>
-    session: NonNullable<Awaited<ReturnType<typeof getServerSession>>>
+    session: Session
     workspaceId: string
     userRole: Role
   }
@@ -59,7 +62,8 @@ export function withAuth(handler: ApiHandler, requiredRoles?: Role[]) {
       }
 
       // Vérifier le rôle si requis
-      if (requiredRoles && !requiredRoles.includes(membership.role)) {
+      const userRole = membership.role as Role
+      if (requiredRoles && !requiredRoles.includes(userRole)) {
         return NextResponse.json(
           { error: "Permissions insuffisantes" },
           { status: 403 }
@@ -68,9 +72,9 @@ export function withAuth(handler: ApiHandler, requiredRoles?: Role[]) {
 
       return handler(req, {
         params: context.params,
-        session,
+        session: session as Session,
         workspaceId,
-        userRole: membership.role,
+        userRole,
       })
     } catch (error) {
       console.error("API Error:", error)
