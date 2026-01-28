@@ -85,7 +85,7 @@ export default function ConnexionPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">TenderOps</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Softboard</CardTitle>
           <CardDescription className="text-center">
             Connectez-vous pour accéder à votre espace
           </CardDescription>
@@ -96,7 +96,7 @@ export default function ConnexionPage() {
           </Suspense>
 
           <div className="mt-6 text-center text-sm text-gray-500">
-            <p>Compte démo : admin@tenderops.fr / admin123</p>
+            <p>Compte démo : admin@softboard.fr / admin123</p>
           </div>
         </CardContent>
       </Card>

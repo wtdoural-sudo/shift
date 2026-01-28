@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Providers } from "./providers"
 
 export const metadata: Metadata = {
-  title: "TenderOps - Gestion des réponses aux appels d'offres",
+  title: "Softboard - Gestion des réponses aux appels d'offres",
   description: "Structurez vos réponses aux appels d'offres, réduisez le temps perdu et capitalisez sur votre travail.",
 }
 

@@ -44,7 +44,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-gray-800">
         <Link href="/tableau-de-bord" className="text-xl font-bold">
-          TenderOps
+          Softboard
         </Link>
       </div>
 

@@ -22,10 +22,10 @@ async function main() {
   // 2. Créer l'utilisateur admin
   const adminPassword = await hash("admin123", 12)
   const admin = await prisma.user.upsert({
-    where: { email: "admin@tenderops.fr" },
+    where: { email: "admin@softboard.fr" },
     update: {},
     create: {
-      email: "admin@tenderops.fr",
+      email: "admin@softboard.fr",
       firstName: "Jean",
       lastName: "Dupont",
       passwordHash: adminPassword,
@@ -52,10 +52,10 @@ async function main() {
   // 3. Créer un utilisateur éditeur
   const editorPassword = await hash("editor123", 12)
   const editor = await prisma.user.upsert({
-    where: { email: "editor@tenderops.fr" },
+    where: { email: "editor@softboard.fr" },
     update: {},
     create: {
-      email: "editor@tenderops.fr",
+      email: "editor@softboard.fr",
       firstName: "Marie",
       lastName: "Martin",
       passwordHash: editorPassword,
@@ -303,8 +303,8 @@ La Région Île-de-France recherche un partenaire capable de...`,
 
   console.log("\n🎉 Seeding terminé avec succès!")
   console.log("\n📝 Comptes de démonstration:")
-  console.log("   Admin:  admin@tenderops.fr / admin123")
-  console.log("   Éditeur: editor@tenderops.fr / editor123")
+  console.log("   Admin:  admin@softboard.fr / admin123")
+  console.log("   Éditeur: editor@softboard.fr / editor123")
 }
 
 main()
