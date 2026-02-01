@@ -113,8 +113,25 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Registration error:", error)
+
+    // Handle specific Prisma errors
+    if (error instanceof Error) {
+      if (error.message.includes("Unique constraint")) {
+        return NextResponse.json(
+          { error: "Un compte existe déjà avec cette adresse email" },
+          { status: 400 }
+        )
+      }
+      if (error.message.includes("connect")) {
+        return NextResponse.json(
+          { error: "Erreur de connexion à la base de données. Veuillez réessayer." },
+          { status: 500 }
+        )
+      }
+    }
+
     return NextResponse.json(
-      { error: "Une erreur est survenue lors de l'inscription" },
+      { error: "Une erreur est survenue lors de l'inscription. Veuillez réessayer." },
       { status: 500 }
     )
   }
