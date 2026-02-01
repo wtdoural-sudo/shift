@@ -177,32 +177,33 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          {/* Feature 1: Import DCE */}
+          {/* Feature 1: Gestion des dossiers */}
           <div className="grid lg:grid-cols-2 gap-16 items-center mb-24">
             <div>
               <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium mb-4">
-                <Upload className="h-4 w-4" />
-                Import simplifié
+                <FileText className="h-4 w-4" />
+                Gestion centralisée
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Importez vos dossiers en quelques secondes
+                Tous vos dossiers en un seul endroit
               </h3>
               <p className="text-gray-600 mb-6">
-                Glissez-déposez vos fichiers DCE (PDF, DOCX, ZIP) et laissez Softboard
-                extraire automatiquement les informations clés et les exigences.
+                Centralisez vos appels d'offres, suivez leur avancement et ne manquez
+                plus aucune échéance. Une vue claire sur tous vos projets en cours.
               </p>
               <ul className="space-y-3">
-                <CheckItem text="Support PDF, DOCX, ZIP et images" />
-                <CheckItem text="Extraction automatique des métadonnées" />
-                <CheckItem text="Organisation intelligente des documents" />
+                <CheckItem text="Vue d'ensemble de tous les dossiers" />
+                <CheckItem text="Suivi des échéances et alertes" />
+                <CheckItem text="Historique complet des actions" />
               </ul>
             </div>
             {/* Static Screenshot Mock */}
-            <ScreenshotMock title="Importer un Dossier">
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-12 text-center bg-gray-50">
-                <Upload className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 font-medium mb-2">Glissez-déposez vos fichiers DCE</p>
-                <p className="text-sm text-gray-400">Format supportés : PDF, DOCX, ZIP</p>
+            <ScreenshotMock title="Mes Dossiers">
+              <div className="space-y-3">
+                <DossierRow reference="AO-2024-042" titre="Marché de maintenance" client="Ville de Lyon" status="EN_COURS" date="15/02/2024" />
+                <DossierRow reference="AO-2024-038" titre="Fourniture équipements IT" client="Région IDF" status="GO" date="22/02/2024" />
+                <DossierRow reference="AO-2024-035" titre="Prestations conseil" client="Ministère" status="ANALYSE" date="01/03/2024" />
+                <DossierRow reference="AO-2024-031" titre="Développement logiciel" client="SNCF" status="DEPOSE" date="10/01/2024" />
               </div>
             </ScreenshotMock>
           </div>
@@ -496,5 +497,30 @@ function CheckItem({ text }: { text: string }) {
       <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
       <span className="text-gray-700">{text}</span>
     </li>
+  )
+}
+
+function DossierRow({ reference, titre, client, status, date }: { reference: string; titre: string; client: string; status: string; date: string }) {
+  const statusStyles: Record<string, { bg: string; text: string; label: string }> = {
+    EN_COURS: { bg: "bg-blue-100", text: "text-blue-700", label: "En cours" },
+    GO: { bg: "bg-green-100", text: "text-green-700", label: "Go" },
+    ANALYSE: { bg: "bg-orange-100", text: "text-orange-700", label: "Analyse" },
+    DEPOSE: { bg: "bg-gray-100", text: "text-gray-700", label: "Déposé" },
+  }
+  const s = statusStyles[status] || statusStyles.EN_COURS
+  return (
+    <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg border">
+      <div className="flex items-center gap-4">
+        <div>
+          <span className="text-xs text-gray-400">{reference}</span>
+          <p className="text-sm font-medium text-gray-900">{titre}</p>
+          <span className="text-xs text-gray-500">{client}</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <span className="text-xs text-gray-400">{date}</span>
+        <span className={`text-xs px-2 py-1 rounded ${s.bg} ${s.text}`}>{s.label}</span>
+      </div>
+    </div>
   )
 }
