@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,6 +13,7 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/tableau-de-bord"
+  const justRegistered = searchParams.get("registered") === "true"
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -44,6 +46,11 @@ function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {justRegistered && (
+        <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md">
+          Compte créé avec succès ! Vous pouvez maintenant vous connecter.
+        </div>
+      )}
       {error && (
         <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
           {error}
@@ -63,7 +70,12 @@ function LoginForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">Mot de passe</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Mot de passe</Label>
+          <Link href="/mot-de-passe-oublie" className="text-sm text-blue-600 hover:underline">
+            Mot de passe oublié ?
+          </Link>
+        </div>
         <Input
           id="password"
           type="password"
@@ -95,7 +107,20 @@ export default function ConnexionPage() {
             <LoginForm />
           </Suspense>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
+          <div className="mt-6 text-center text-sm">
+            <span className="text-gray-500">Pas encore de compte ?</span>{" "}
+            <Link href="/inscription" className="text-blue-600 hover:underline">
+              Créer un compte
+            </Link>
+          </div>
+
+          <div className="mt-4 text-center">
+            <Link href="/" className="text-sm text-gray-500 hover:underline">
+              Retour à l'accueil
+            </Link>
+          </div>
+
+          <div className="mt-6 pt-4 border-t text-center text-sm text-gray-500">
             <p>Compte démo : admin@softboard.fr / admin123</p>
           </div>
         </CardContent>
