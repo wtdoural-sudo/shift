@@ -231,11 +231,11 @@ export default function PreuvesPage() {
                   </p>
                 )}
 
-                {preuve.tags?.length > 0 && (
+                {preuve.tags && preuve.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {preuve.tags.map((tag: string) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
+                    {String(preuve.tags).split(",").filter(Boolean).map((tag: string) => (
+                      <Badge key={tag.trim()} variant="outline" className="text-xs">
+                        {tag.trim()}
                       </Badge>
                     ))}
                   </div>
@@ -430,7 +430,7 @@ function PreuveEditDialog({
     type: preuve.type,
     description: preuve.description || "",
     contenu: preuve.contenu || "",
-    tags: preuve.tags?.join(", ") || "",
+    tags: preuve.tags || "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
