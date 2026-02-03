@@ -1,81 +1,54 @@
 import { getSession } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { formatDate } from "@/lib/utils"
 import Link from "next/link"
-import { FolderOpen, AlertTriangle, Clock, CheckCircle } from "lucide-react"
+import { Plus, Calendar, Building2 } from "lucide-react"
 
-async function getDashboardData(workspaceId: string) {
+async function getDossiers(workspaceId: string) {
   try {
-    const [dossiers, stats] = await Promise.all([
-      prisma.dossier.findMany({
-        where: { workspaceId },
-        orderBy: { dateLimite: "asc" },
-        take: 10,
-        include: {
-          _count: {
-            select: {
-              exigences: true,
-              taches: true,
-              checklistItems: true,
-            },
-          },
-          exigences: {
-            select: { status: true },
-          },
-          taches: {
-            select: { status: true },
-          },
-          checklistItems: {
-            select: { status: true },
+    const dossiers = await prisma.dossier.findMany({
+      where: { workspaceId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: {
+            exigences: true,
+            checklistItems: true,
           },
         },
-      }),
-      prisma.dossier.groupBy({
-        by: ["status"],
-        where: { workspaceId },
-        _count: true,
-      }),
-    ])
-
-    return { dossiers, stats, error: null }
+        exigences: {
+          select: { status: true },
+        },
+        checklistItems: {
+          select: { status: true },
+        },
+      },
+    })
+    return { dossiers, error: null }
   } catch (error) {
-    console.error("Dashboard data error:", error)
-    return { dossiers: [], stats: [], error: String(error) }
+    console.error("Dashboard error:", error)
+    return { dossiers: [], error: String(error) }
   }
 }
 
-function getStatusColor(status: string) {
-  const colors: Record<string, "default" | "secondary" | "success" | "warning" | "destructive" | "info"> = {
-    BROUILLON: "secondary",
-    EN_ANALYSE: "info",
-    GO: "success",
-    NO_GO: "destructive",
-    EN_PRODUCTION: "warning",
-    DEPOSE: "success",
-    ARCHIVE: "secondary",
+function getStatusBadge(status: string) {
+  const config: Record<string, { label: string; className: string }> = {
+    BROUILLON: { label: "Brouillon", className: "bg-gray-100 text-gray-700" },
+    EN_ANALYSE: { label: "En analyse", className: "bg-blue-100 text-blue-700" },
+    GO: { label: "Go", className: "bg-green-100 text-green-700" },
+    NO_GO: { label: "No-Go", className: "bg-red-100 text-red-700" },
+    EN_PRODUCTION: { label: "En cours", className: "bg-orange-100 text-orange-700" },
+    DEPOSE: { label: "Déposé", className: "bg-purple-100 text-purple-700" },
+    ARCHIVE: { label: "Archivé", className: "bg-gray-100 text-gray-500" },
   }
-  return colors[status] || "default"
+  return config[status] || { label: status, className: "bg-gray-100 text-gray-700" }
 }
 
-function getStatusLabel(status: string) {
-  const labels: Record<string, string> = {
-    BROUILLON: "Brouillon",
-    EN_ANALYSE: "En analyse",
-    GO: "Go",
-    NO_GO: "No-Go",
-    EN_PRODUCTION: "En production",
-    DEPOSE: "Déposé",
-    ARCHIVE: "Archivé",
-  }
-  return labels[status] || status
-}
-
-function calculateProgress(items: { status: string }[], doneStatus: string) {
+function calculateProgress(items: { status: string }[], doneStatuses: string[]) {
   if (items.length === 0) return 0
-  const done = items.filter((i) => i.status === doneStatus).length
+  const done = items.filter((i) => doneStatuses.includes(i.status)).length
   return Math.round((done / items.length) * 100)
 }
 
@@ -87,223 +60,143 @@ export default async function TableauDeBordPage() {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">Aucun espace de travail configuré.</p>
-        <p className="text-sm text-gray-400 mt-2">
-          Workspace non trouvé pour cet utilisateur.
-        </p>
       </div>
     )
   }
 
-  const { dossiers, stats, error } = await getDashboardData(workspaceId)
+  const { dossiers, error } = await getDossiers(workspaceId)
 
   if (error) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Tableau de bord</h1>
-          <p className="text-gray-500">Bienvenue sur Softboard</p>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Mes Dossiers</h1>
+          <Link href="/dossiers/nouveau">
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau dossier
+            </Button>
+          </Link>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Erreur de chargement</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-red-600 text-sm mb-4">{error}</p>
-            <p className="text-gray-500">
-              La base de données n'est peut-être pas correctement configurée.
-            </p>
-            <Link href="/dossiers/nouveau" className="text-primary hover:underline mt-4 block">
-              Créer un premier dossier
-            </Link>
-          </CardContent>
-        </Card>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600 text-sm">{error}</p>
+        </div>
       </div>
     )
   }
 
-  const totalDossiers = stats.reduce((acc, s) => acc + s._count, 0)
-  const dossiersActifs = stats
-    .filter((s) => ["EN_ANALYSE", "GO", "EN_PRODUCTION"].includes(s.status))
-    .reduce((acc, s) => acc + s._count, 0)
-
-  // Dossiers avec deadline proche (7 jours)
-  const now = new Date()
-  const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-  const dossiersUrgents = dossiers.filter(
-    (d) => d.dateLimite && new Date(d.dateLimite) <= weekFromNow && new Date(d.dateLimite) >= now
-  )
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Tableau de bord</h1>
-        <p className="text-gray-500">Vue d'ensemble de vos dossiers d'appels d'offres</p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">Mes Dossiers</h1>
+        <Link href="/dossiers/nouveau">
+          <Button className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau dossier
+          </Button>
+        </Link>
       </div>
-
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Total dossiers
-            </CardTitle>
-            <FolderOpen className="h-4 w-4 text-gray-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalDossiers}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Dossiers actifs
-            </CardTitle>
-            <Clock className="h-4 w-4 text-gray-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{dossiersActifs}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Deadlines proches
-            </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {dossiersUrgents.length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              Déposés ce mois
-            </CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {stats.find((s) => s.status === "DEPOSE")?._count || 0}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Alertes */}
-      {dossiersUrgents.length > 0 && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="text-orange-800 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Dossiers avec deadline imminente
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {dossiersUrgents.map((d) => (
-                <li key={d.id} className="flex items-center justify-between">
-                  <Link
-                    href={`/dossiers/${d.id}`}
-                    className="text-orange-900 hover:underline font-medium"
-                  >
-                    {d.reference} - {d.titre}
-                  </Link>
-                  <span className="text-orange-700 text-sm">
-                    {formatDate(d.dateLimite)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Liste des dossiers */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Dossiers récents</CardTitle>
-          <CardDescription>
-            Vos derniers dossiers d'appels d'offres
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {dossiers.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">
-              Aucun dossier pour le moment.{" "}
-              <Link href="/dossiers/nouveau" className="text-primary hover:underline">
-                Créer un dossier
-              </Link>
+      {dossiers.length === 0 ? (
+        <div className="bg-white rounded-lg border p-12 text-center">
+          <div className="max-w-sm mx-auto">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Aucun dossier
+            </h3>
+            <p className="text-gray-500 mb-6">
+              Créez votre premier dossier pour commencer à gérer vos appels d'offres.
             </p>
-          ) : (
-            <div className="space-y-4">
-              {dossiers.map((dossier) => {
-                const exigenceProgress = calculateProgress(
-                  dossier.exigences,
-                  "TRAITE"
-                )
-                const tacheProgress = calculateProgress(
-                  dossier.taches,
-                  "TERMINE"
-                )
+            <Link href="/dossiers/nouveau">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Créer un dossier
+              </Button>
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {dossiers.map((dossier) => {
+            const statusBadge = getStatusBadge(dossier.status)
+            const conformiteProgress = calculateProgress(
+              dossier.checklistItems,
+              ["CONFORME"]
+            )
+            const exigencesProgress = calculateProgress(
+              dossier.exigences,
+              ["TRAITE"]
+            )
 
-                return (
-                  <Link
-                    key={dossier.id}
-                    href={`/dossiers/${dossier.id}`}
-                    className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{dossier.reference}</span>
-                          <Badge variant={getStatusColor(dossier.status)}>
-                            {getStatusLabel(dossier.status)}
-                          </Badge>
-                        </div>
-                        <h3 className="text-lg font-semibold mt-1">
-                          {dossier.titre}
-                        </h3>
-                        <p className="text-sm text-gray-500">{dossier.client}</p>
+            return (
+              <Link
+                key={dossier.id}
+                href={`/dossiers/${dossier.id}`}
+                className="block bg-white rounded-lg border hover:border-blue-300 hover:shadow-md transition-all"
+              >
+                <div className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="text-sm font-medium text-blue-600">
+                          {dossier.reference}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${statusBadge.className}`}>
+                          {statusBadge.label}
+                        </span>
                       </div>
-                      {dossier.dateLimite && (
-                        <div className="text-right text-sm">
-                          <span className="text-gray-500">Date limite</span>
-                          <div className="font-medium">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {dossier.titre}
+                      </h3>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Building2 className="h-4 w-4" />
+                          {dossier.client}
+                        </span>
+                        {dossier.dateLimite && (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
                             {formatDate(dossier.dateLimite)}
-                          </div>
-                        </div>
-                      )}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                      <div>
-                        <div className="flex items-center justify-between text-sm mb-1">
-                          <span className="text-gray-500">Exigences</span>
-                          <span>{exigenceProgress}%</span>
-                        </div>
-                        <Progress value={exigenceProgress} className="h-2" />
+                  {/* Progress bars */}
+                  <div className="grid grid-cols-2 gap-6 mt-4 pt-4 border-t">
+                    <div>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="text-gray-600">Conformité</span>
+                        <span className="font-medium">{conformiteProgress}%</span>
                       </div>
-                      <div>
-                        <div className="flex items-center justify-between text-sm mb-1">
-                          <span className="text-gray-500">Tâches</span>
-                          <span>{tacheProgress}%</span>
-                        </div>
-                        <Progress value={tacheProgress} className="h-2" />
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-green-500 rounded-full transition-all"
+                          style={{ width: `${conformiteProgress}%` }}
+                        />
                       </div>
                     </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    <div>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="text-gray-600">Exigences</span>
+                        <span className="font-medium">{exigencesProgress}%</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500 rounded-full transition-all"
+                          style={{ width: `${exigencesProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
