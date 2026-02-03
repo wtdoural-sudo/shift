@@ -108,3 +108,49 @@ export const POST = withAuth(async (req, { workspaceId }) => {
     201
   )
 }, ["ADMIN"])
+
+export const DELETE = withAuth(async (req, { workspaceId, session }) => {
+  const { searchParams } = new URL(req.url)
+  const memberId = searchParams.get("memberId")
+
+  if (!memberId) {
+    return apiError("ID du membre requis")
+  }
+
+  // Récupérer le membre
+  const member = await prisma.workspaceMember.findFirst({
+    where: {
+      id: memberId,
+      workspaceId,
+    },
+  })
+
+  if (!member) {
+    return apiError("Membre non trouvé", 404)
+  }
+
+  // Empêcher la suppression de soi-même
+  if (member.userId === session.user.id) {
+    return apiError("Vous ne pouvez pas vous supprimer vous-même")
+  }
+
+  // Empêcher de supprimer le dernier admin
+  if (member.role === "ADMIN") {
+    const adminCount = await prisma.workspaceMember.count({
+      where: {
+        workspaceId,
+        role: "ADMIN",
+      },
+    })
+
+    if (adminCount <= 1) {
+      return apiError("Impossible de supprimer le dernier administrateur")
+    }
+  }
+
+  await prisma.workspaceMember.delete({
+    where: { id: memberId },
+  })
+
+  return apiSuccess({ success: true })
+}, ["ADMIN"])

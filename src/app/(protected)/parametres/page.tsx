@@ -71,6 +71,30 @@ export default function ParametresPage() {
     fetchMembers()
   }, [])
 
+  const handleDeleteMember = async (memberId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce membre ?")) return
+
+    try {
+      const response = await fetch(`/api/workspace/members?memberId=${memberId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const result = await response.json()
+        throw new Error(result.error || "Erreur")
+      }
+
+      toast({ title: "Membre supprimé" })
+      fetchMembers()
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Erreur inconnue",
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleAddMember = async (data: any) => {
     try {
       const response = await fetch("/api/workspace/members", {
@@ -180,7 +204,12 @@ export default function ParametresPage() {
                     {currentUserRole === "ADMIN" && (
                       <TableCell>
                         {member.user.id !== session?.user?.id && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDeleteMember(member.id)}
+                          >
                             <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
                         )}
