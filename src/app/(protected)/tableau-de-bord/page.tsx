@@ -8,38 +8,43 @@ import Link from "next/link"
 import { FolderOpen, AlertTriangle, Clock, CheckCircle } from "lucide-react"
 
 async function getDashboardData(workspaceId: string) {
-  const [dossiers, stats] = await Promise.all([
-    prisma.dossier.findMany({
-      where: { workspaceId },
-      orderBy: { dateLimite: "asc" },
-      take: 10,
-      include: {
-        _count: {
-          select: {
-            exigences: true,
-            taches: true,
-            checklistItems: true,
+  try {
+    const [dossiers, stats] = await Promise.all([
+      prisma.dossier.findMany({
+        where: { workspaceId },
+        orderBy: { dateLimite: "asc" },
+        take: 10,
+        include: {
+          _count: {
+            select: {
+              exigences: true,
+              taches: true,
+              checklistItems: true,
+            },
+          },
+          exigences: {
+            select: { status: true },
+          },
+          taches: {
+            select: { status: true },
+          },
+          checklistItems: {
+            select: { status: true },
           },
         },
-        exigences: {
-          select: { status: true },
-        },
-        taches: {
-          select: { status: true },
-        },
-        checklistItems: {
-          select: { status: true },
-        },
-      },
-    }),
-    prisma.dossier.groupBy({
-      by: ["status"],
-      where: { workspaceId },
-      _count: true,
-    }),
-  ])
+      }),
+      prisma.dossier.groupBy({
+        by: ["status"],
+        where: { workspaceId },
+        _count: true,
+      }),
+    ])
 
-  return { dossiers, stats }
+    return { dossiers, stats, error: null }
+  } catch (error) {
+    console.error("Dashboard data error:", error)
+    return { dossiers: [], stats: [], error: String(error) }
+  }
 }
 
 function getStatusColor(status: string) {
@@ -82,11 +87,39 @@ export default async function TableauDeBordPage() {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">Aucun espace de travail configuré.</p>
+        <p className="text-sm text-gray-400 mt-2">
+          Workspace non trouvé pour cet utilisateur.
+        </p>
       </div>
     )
   }
 
-  const { dossiers, stats } = await getDashboardData(workspaceId)
+  const { dossiers, stats, error } = await getDashboardData(workspaceId)
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Tableau de bord</h1>
+          <p className="text-gray-500">Bienvenue sur Softboard</p>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Erreur de chargement</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-600 text-sm mb-4">{error}</p>
+            <p className="text-gray-500">
+              La base de données n'est peut-être pas correctement configurée.
+            </p>
+            <Link href="/dossiers/nouveau" className="text-primary hover:underline mt-4 block">
+              Créer un premier dossier
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   const totalDossiers = stats.reduce((acc, s) => acc + s._count, 0)
   const dossiersActifs = stats
