@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { useState, useEffect, useCallback } from "react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,11 +21,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { useToast } from "@/components/ui/use-toast"
-import { Plus, Search, FileCheck, Trash2, Edit, Upload, FileText } from "lucide-react"
+import { Plus, Search, FileCheck, Trash2, Edit, FileText } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
-const typeLabels = {
+const typeLabels: Record<string, string> = {
   REFERENCE: "Référence",
   CV: "CV",
   CERTIFICATION: "Certification",
@@ -34,96 +32,67 @@ const typeLabels = {
   AUTRE: "Autre",
 }
 
-const typeColors = {
-  REFERENCE: "info",
-  CV: "success",
-  CERTIFICATION: "warning",
-  DOCUMENT: "secondary",
-  AUTRE: "outline",
-} as const
+const typeColors: Record<string, string> = {
+  REFERENCE: "bg-blue-100 text-blue-700",
+  CV: "bg-green-100 text-green-700",
+  CERTIFICATION: "bg-yellow-100 text-yellow-700",
+  DOCUMENT: "bg-gray-100 text-gray-700",
+  AUTRE: "bg-purple-100 text-purple-700",
+}
+
+interface Preuve {
+  id: string
+  titre: string
+  description?: string
+  type: string
+  tags?: string
+  filename?: string
+  createdAt: string
+  _count?: {
+    dossierPreuves: number
+  }
+}
 
 export default function PreuvesPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-
-  const [preuves, setPreuves] = useState<any[]>([])
+  const [preuves, setPreuves] = useState<Preuve[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
-  const [typeFilter, setTypeFilter] = useState("")
+  const [typeFilter, setTypeFilter] = useState("all")
   const [showAdd, setShowAdd] = useState(false)
-  const [editingPreuve, setEditingPreuve] = useState<any>(null)
+  const [editingPreuve, setEditingPreuve] = useState<Preuve | null>(null)
 
-  const fetchPreuves = async () => {
+  const fetchPreuves = useCallback(async () => {
     try {
+      setLoading(true)
+      setError(null)
       const params = new URLSearchParams()
       if (search) params.set("search", search)
-      if (typeFilter) params.set("type", typeFilter)
+      if (typeFilter && typeFilter !== "all") params.set("type", typeFilter)
 
       const response = await fetch(`/api/preuves?${params}`)
+      if (!response.ok) throw new Error("Erreur de chargement")
       const data = await response.json()
-      setPreuves(data)
-    } catch {
-      toast({ title: "Erreur de chargement", variant: "destructive" })
+      setPreuves(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setError("Erreur lors du chargement des preuves")
+      setPreuves([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [search, typeFilter])
 
   useEffect(() => {
     fetchPreuves()
-  }, [search, typeFilter])
-
-  const handleAddPreuve = async (formData: FormData) => {
-    try {
-      const response = await fetch("/api/preuves", {
-        method: "POST",
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Erreur")
-      }
-
-      toast({ title: "Preuve ajoutée" })
-      setShowAdd(false)
-      fetchPreuves()
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur inconnue",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleUpdatePreuve = async (id: string, data: any) => {
-    try {
-      const response = await fetch(`/api/preuves/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-
-      if (!response.ok) throw new Error()
-
-      toast({ title: "Preuve mise à jour" })
-      setEditingPreuve(null)
-      fetchPreuves()
-    } catch {
-      toast({ title: "Erreur", variant: "destructive" })
-    }
-  }
+  }, [fetchPreuves])
 
   const handleDeletePreuve = async (id: string) => {
     if (!confirm("Supprimer cette preuve ?")) return
-
     try {
       await fetch(`/api/preuves/${id}`, { method: "DELETE" })
-      toast({ title: "Preuve supprimée" })
       fetchPreuves()
     } catch {
-      toast({ title: "Erreur", variant: "destructive" })
+      alert("Erreur lors de la suppression")
     }
   }
 
@@ -136,7 +105,7 @@ export default function PreuvesPage() {
             Centralisez vos références, CV et documents réutilisables
           </p>
         </div>
-        <Button onClick={() => setShowAdd(true)}>
+        <Button onClick={() => setShowAdd(true)} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="h-4 w-4 mr-2" />
           Ajouter une preuve
         </Button>
@@ -160,7 +129,7 @@ export default function PreuvesPage() {
                 <SelectValue placeholder="Tous les types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les types</SelectItem>
+                <SelectItem value="all">Tous les types</SelectItem>
                 {Object.entries(typeLabels).map(([k, v]) => (
                   <SelectItem key={k} value={k}>
                     {v}
@@ -171,6 +140,13 @@ export default function PreuvesPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Erreur */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600 text-sm">{error}</p>
+        </div>
+      )}
 
       {/* Liste */}
       {loading ? (
@@ -183,12 +159,12 @@ export default function PreuvesPage() {
               Aucune preuve
             </h3>
             <p className="text-gray-500 mb-4">
-              {search || typeFilter
+              {search || typeFilter !== "all"
                 ? "Aucun résultat pour cette recherche"
                 : "Commencez par ajouter vos premières preuves"}
             </p>
-            {!search && !typeFilter && (
-              <Button onClick={() => setShowAdd(true)}>
+            {!search && typeFilter === "all" && (
+              <Button onClick={() => setShowAdd(true)} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="h-4 w-4 mr-2" />
                 Ajouter une preuve
               </Button>
@@ -201,9 +177,9 @@ export default function PreuvesPage() {
             <Card key={preuve.id} className="hover:bg-gray-50 transition-colors">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
-                  <Badge variant={typeColors[preuve.type as keyof typeof typeColors]}>
-                    {typeLabels[preuve.type as keyof typeof typeLabels]}
-                  </Badge>
+                  <span className={`text-xs px-2 py-1 rounded-full ${typeColors[preuve.type] || typeColors.AUTRE}`}>
+                    {typeLabels[preuve.type] || preuve.type}
+                  </span>
                   <div className="flex gap-1">
                     <Button
                       variant="ghost"
@@ -233,8 +209,8 @@ export default function PreuvesPage() {
 
                 {preuve.tags && preuve.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {String(preuve.tags).split(",").filter(Boolean).map((tag: string) => (
-                      <Badge key={tag.trim()} variant="outline" className="text-xs">
+                    {String(preuve.tags).split(",").filter(Boolean).map((tag: string, i: number) => (
+                      <Badge key={i} variant="outline" className="text-xs">
                         {tag.trim()}
                       </Badge>
                     ))}
@@ -251,7 +227,7 @@ export default function PreuvesPage() {
                   )}
                 </div>
 
-                {preuve._count?.dossierPreuves > 0 && (
+                {preuve._count && preuve._count.dossierPreuves > 0 && (
                   <p className="text-xs text-gray-500 mt-2">
                     Utilisée dans {preuve._count.dossierPreuves} dossier(s)
                   </p>
@@ -266,7 +242,10 @@ export default function PreuvesPage() {
       <PreuveDialog
         open={showAdd}
         onOpenChange={setShowAdd}
-        onSubmit={handleAddPreuve}
+        onSuccess={() => {
+          setShowAdd(false)
+          fetchPreuves()
+        }}
       />
 
       {/* Dialog Edition */}
@@ -275,7 +254,10 @@ export default function PreuvesPage() {
           open={!!editingPreuve}
           onOpenChange={(v) => !v && setEditingPreuve(null)}
           preuve={editingPreuve}
-          onSubmit={(data) => handleUpdatePreuve(editingPreuve.id, data)}
+          onSuccess={() => {
+            setEditingPreuve(null)
+            fetchPreuves()
+          }}
         />
       )}
     </div>
@@ -285,37 +267,48 @@ export default function PreuvesPage() {
 function PreuveDialog({
   open,
   onOpenChange,
-  onSubmit,
+  onSuccess,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
-  onSubmit: (formData: FormData) => void
+  onSuccess: () => void
 }) {
   const [loading, setLoading] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
+    setError("")
 
     const form = e.currentTarget
     const formData = new FormData(form)
 
-    if (file) {
-      formData.set("file", file)
+    try {
+      const response = await fetch("/api/preuves", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titre: formData.get("titre"),
+          type: formData.get("type"),
+          description: formData.get("description"),
+          contenu: formData.get("contenu"),
+          tags: formData.get("tags"),
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Erreur")
+      }
+
+      form.reset()
+      onSuccess()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue")
+    } finally {
+      setLoading(false)
     }
-
-    // Traiter les tags
-    const tagsInput = formData.get("tags") as string
-    const tags = tagsInput
-      ? tagsInput.split(",").map((t: string) => t.trim()).filter(Boolean)
-      : []
-    formData.set("tags", JSON.stringify(tags))
-
-    await onSubmit(formData)
-    setFile(null)
-    form.reset()
-    setLoading(false)
   }
 
   return (
@@ -325,6 +318,10 @@ function PreuveDialog({
           <DialogTitle>Ajouter une preuve</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">{error}</div>
+          )}
+
           <div className="space-y-2">
             <Label>Titre *</Label>
             <Input name="titre" required />
@@ -356,47 +353,13 @@ function PreuveDialog({
             <Textarea
               name="contenu"
               rows={4}
-              placeholder="Texte de la preuve (si pas de fichier joint)"
+              placeholder="Texte de la preuve"
             />
           </div>
 
           <div className="space-y-2">
             <Label>Tags (séparés par des virgules)</Label>
             <Input name="tags" placeholder="qualité, iso9001, référence" />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Fichier joint (optionnel)</Label>
-            <div className="border-2 border-dashed rounded-lg p-4 text-center">
-              {file ? (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">{file.name}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setFile(null)}
-                  >
-                    Retirer
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <Upload className="h-6 w-6 mx-auto text-gray-400 mb-2" />
-                  <Input
-                    type="file"
-                    className="hidden"
-                    id="file-upload"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  />
-                  <Label htmlFor="file-upload" className="cursor-pointer">
-                    <span className="text-sm text-primary hover:underline">
-                      Sélectionner un fichier
-                    </span>
-                  </Label>
-                </>
-              )}
-            </div>
           </div>
 
           <DialogFooter>
@@ -417,36 +380,42 @@ function PreuveEditDialog({
   open,
   onOpenChange,
   preuve,
-  onSubmit,
+  onSuccess,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
-  preuve: any
-  onSubmit: (data: any) => void
+  preuve: Preuve
+  onSuccess: () => void
 }) {
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
   const [formData, setFormData] = useState({
     titre: preuve.titre,
     type: preuve.type,
     description: preuve.description || "",
-    contenu: preuve.contenu || "",
+    contenu: "",
     tags: preuve.tags || "",
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError("")
 
-    const tags = formData.tags
-      ? formData.tags.split(",").map((t: string) => t.trim()).filter(Boolean)
-      : []
+    try {
+      const response = await fetch(`/api/preuves/${preuve.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
 
-    await onSubmit({
-      ...formData,
-      tags,
-    })
-
-    setLoading(false)
+      if (!response.ok) throw new Error("Erreur")
+      onSuccess()
+    } catch {
+      setError("Erreur lors de la mise à jour")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -456,6 +425,10 @@ function PreuveEditDialog({
           <DialogTitle>Modifier la preuve</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">{error}</div>
+          )}
+
           <div className="space-y-2">
             <Label>Titre *</Label>
             <Input
@@ -490,15 +463,6 @@ function PreuveEditDialog({
               value={formData.description}
               onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
               rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Contenu texte</Label>
-            <Textarea
-              value={formData.contenu}
-              onChange={(e) => setFormData((p) => ({ ...p, contenu: e.target.value }))}
-              rows={4}
             />
           </div>
 
