@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, FolderPlus, Building2, Calendar, Euro, FileText } from "lucide-react"
 import Link from "next/link"
 
 export default function NouveauDossierPage() {
@@ -45,12 +45,12 @@ export default function NouveauDossierPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la création")
+        throw new Error(data.error || "Erreur lors de la creation")
       }
 
       toast({
-        title: "Dossier créé",
-        description: `Le dossier ${data.reference} a été créé avec succès.`,
+        title: "Dossier cree",
+        description: `Le dossier ${data.reference} a ete cree avec succes.`,
       })
 
       router.push(`/dossiers/${data.id}`)
@@ -75,31 +75,41 @@ export default function NouveauDossierPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dossiers">
+    <div className="max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-8">
+        <Link href="/tableau-de-bord">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold">Nouveau dossier</h1>
-          <p className="text-gray-500">Créez un nouveau dossier d'appel d'offres</p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <FolderPlus className="h-6 w-6 text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Nouveau dossier</h1>
+            <p className="text-gray-500">Creez un nouveau dossier d'appel d'offres</p>
+          </div>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations du dossier</CardTitle>
-          <CardDescription>
-            Renseignez les informations de base de l'appel d'offres
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Identification */}
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-gray-400" />
+              <CardTitle className="text-lg">Identification</CardTitle>
+            </div>
+            <CardDescription>
+              Reference et titre de l'appel d'offres
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="reference">Référence interne *</Label>
+                <Label htmlFor="reference">Reference interne *</Label>
                 <Input
                   id="reference"
                   name="reference"
@@ -108,6 +118,7 @@ export default function NouveauDossierPage() {
                   onChange={handleChange}
                   required
                 />
+                <p className="text-xs text-gray-500">Votre reference interne pour ce dossier</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="client">Donneur d'ordre *</Label>
@@ -127,26 +138,53 @@ export default function NouveauDossierPage() {
               <Input
                 id="titre"
                 name="titre"
-                placeholder="Marché de conception graphique..."
+                placeholder="Marche de conception graphique et communication..."
                 value={formData.titre}
                 onChange={handleChange}
+                className="text-base"
                 required
               />
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Contexte et informations complémentaires..."
-                value={formData.description}
-                onChange={handleChange}
-                rows={4}
-              />
+        {/* Description */}
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-gray-400" />
+              <CardTitle className="text-lg">Description</CardTitle>
             </div>
+            <CardDescription>
+              Contexte et informations complementaires (optionnel)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="Decrivez le contexte de l'appel d'offres, les enjeux, vos notes..."
+              value={formData.description}
+              onChange={handleChange}
+              rows={4}
+              className="resize-none"
+            />
+          </CardContent>
+        </Card>
 
-            <div className="grid grid-cols-2 gap-4">
+        {/* Dates et budget */}
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-gray-400" />
+              <CardTitle className="text-lg">Planning et budget</CardTitle>
+            </div>
+            <CardDescription>
+              Dates importantes et montant estime
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="datePublication">Date de publication</Label>
                 <Input
@@ -158,7 +196,7 @@ export default function NouveauDossierPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dateLimite">Date limite de réponse</Label>
+                <Label htmlFor="dateLimite">Date limite de reponse</Label>
                 <Input
                   id="dateLimite"
                   name="dateLimite"
@@ -167,33 +205,37 @@ export default function NouveauDossierPage() {
                   onChange={handleChange}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="montantEstime">Montant estime</Label>
+                <div className="relative">
+                  <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="montantEstime"
+                    name="montantEstime"
+                    type="number"
+                    placeholder="50000"
+                    value={formData.montantEstime}
+                    onChange={handleChange}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="montantEstime">Montant estimé (€)</Label>
-              <Input
-                id="montantEstime"
-                name="montantEstime"
-                type="number"
-                placeholder="50000"
-                value={formData.montantEstime}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="flex justify-end gap-4">
-              <Link href="/dossiers">
-                <Button type="button" variant="outline">
-                  Annuler
-                </Button>
-              </Link>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Création..." : "Créer le dossier"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        {/* Actions */}
+        <div className="flex justify-between items-center pt-4">
+          <Link href="/tableau-de-bord">
+            <Button type="button" variant="ghost">
+              Annuler
+            </Button>
+          </Link>
+          <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 px-8">
+            {loading ? "Creation en cours..." : "Creer le dossier"}
+          </Button>
+        </div>
+      </form>
     </div>
   )
 }
