@@ -415,11 +415,11 @@ const Drawer = () => {
             </div>
             <button 
               onClick={closeDrawer}
-              className="p-2 hover:bg-gold/10 transition-colors"
+              className="p-2 hover:bg-gold/10 transition-colors flex-shrink-0"
               aria-label="Fermer"
               data-testid="drawer-close-btn"
             >
-              <X size={20} className="text-earth" />
+              <X size={24} className="text-earth" />
             </button>
           </div>
 

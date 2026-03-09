@@ -50,6 +50,8 @@ const Header = () => {
   const handleNavClick = (id) => {
     setActiveSection(id);
     setMobileMenuOpen(false);
+    setSearchOpen(false); // Close search when navigating
+    setSearchQuery(''); // Clear search query
   };
 
   const handleSearchResultClick = (result) => {
@@ -84,7 +86,7 @@ const Header = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1" data-testid="desktop-nav">
-              {navItems.slice(0, 7).map((item) => (
+              {navItems.slice(0, 8).map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
