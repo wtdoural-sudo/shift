@@ -1,52 +1,72 @@
-import { useEffect } from "react";
+import React from 'react';
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { AppProvider, useApp } from './context/AppContext';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Components
+import Header from './components/Header';
+import Drawer from './components/Drawer';
+import Footer from './components/Footer';
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+// Pages
+import HomePage from './components/HomePage';
+import PeriodesPage from './components/PeriodesPage';
+import AtlasPage from './components/AtlasPage';
+import PeuplesPage from './components/PeuplesPage';
+import VillesPage from './components/VillesPage';
+import PersonnagesPage from './components/PersonnagesPage';
+import ArtsPage from './components/ArtsPage';
+import FrisesPage from './components/FrisesPage';
+import GlossairePage from './components/GlossairePage';
+import BibliographiePage from './components/BibliographiePage';
+
+const MainContent = () => {
+  const { activeSection } = useApp();
+
+  const renderPage = () => {
+    switch (activeSection) {
+      case 'home':
+        return <HomePage />;
+      case 'periodes':
+        return <PeriodesPage />;
+      case 'atlas':
+        return <AtlasPage />;
+      case 'peuples':
+        return <PeuplesPage />;
+      case 'villes':
+        return <VillesPage />;
+      case 'personnages':
+        return <PersonnagesPage />;
+      case 'arts':
+        return <ArtsPage />;
+      case 'frises':
+        return <FrisesPage />;
+      case 'glossaire':
+        return <GlossairePage />;
+      case 'bibliographie':
+        return <BibliographiePage />;
+      default:
+        return <HomePage />;
     }
   };
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1" data-testid="main-content">
+        {renderPage()}
+      </main>
+      <Footer />
+      <Drawer />
     </div>
   );
 };
 
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+    <div className="App" data-testid="app-container">
+      <AppProvider>
+        <MainContent />
+      </AppProvider>
     </div>
   );
 }
