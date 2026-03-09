@@ -1,0 +1,136 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "EHIA — Encyclopédie Historique Illustrée de l'Algérie",
+      "metaphor": "Digital 18th Century Atlas",
+      "tone": "Academic, Prestigious, Tactile, Ancient",
+      "visual_style": "Parchment, Sepia Ink, Gold Leaf, Engravings"
+    },
+    "typography": {
+      "google_fonts_import": "https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Crimson+Pro:ital,wght@0,400;1,400&family=Josefin+Sans:wght@400;600&display=swap",
+      "font_families": {
+        "heading": ["Cinzel Decorative", "cursive"],
+        "subheading": ["Cormorant Garamond", "serif"],
+        "body": ["Source Serif 4", "serif"],
+        "caption": ["Crimson Pro", "serif"],
+        "ui": ["Josefin Sans", "sans-serif"],
+        "number": ["Cinzel", "serif"]
+      },
+      "usage_rules": {
+        "h1": "font-heading text-4xl md:text-6xl text-ink tracking-widest uppercase",
+        "h2": "font-subheading text-3xl md:text-4xl text-sand font-semibold",
+        "h3": "font-subheading text-2xl text-earth font-medium italic",
+        "body": "font-body text-base md:text-lg text-ink/90 leading-relaxed",
+        "caption": "font-caption italic text-sm text-earth/80",
+        "button": "font-ui uppercase tracking-widest text-sm font-semibold",
+        "date": "font-number text-gold font-bold"
+      }
+    },
+    "colors": {
+      "palette": {
+        "parchment": "#F5F0E8",
+        "parchment-dark": "#EDE6D4",
+        "sand": "#C4A35A",
+        "earth": "#6B3E26",
+        "ink": "#1C1209",
+        "mediterranean": "#1A3A5C",
+        "cedar": "#2D5A27",
+        "roman-red": "#8B1A1A",
+        "gold": "#B8860B",
+        "indigo": "#2E1A6B"
+      },
+      "tailwind_config": {
+        "background": "var(--parchment)",
+        "foreground": "var(--ink)",
+        "primary": "var(--earth)",
+        "secondary": "var(--sand)",
+        "accent": "var(--gold)",
+        "muted": "var(--parchment-dark)"
+      }
+    },
+    "layout": {
+      "grid_system": "Bento Grid (Asymmetric)",
+      "spacing": "Generous (p-8 to p-16)",
+      "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+      "z_index": {
+        "base": 0,
+        "texture_overlay": 10,
+        "content": 20,
+        "sticky_nav": 40,
+        "drawer": 50,
+        "modal": 60
+      }
+    },
+    "visual_enhancers": {
+      "texture": {
+        "base": "url('https://images.unsplash.com/photo-1720264715239-29338d845802?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwzfHxwYXJjaG1lbnQlMjBwYXBlciUyMHRleHR1cmUlMjBhbnRpcXVlfGVufDB8fHx8MTc3MzAzMTM0MXww&ixlib=rb-4.1.0&q=85')",
+        "blend_mode": "multiply",
+        "opacity": "0.4"
+      },
+      "shadows": {
+        "soft": "4px 4px 12px rgba(28,18,9,0.15)",
+        "deep": "8px 8px 24px rgba(28,18,9,0.25)"
+      },
+      "borders": {
+        "style": "solid",
+        "width": "1px",
+        "color": "rgba(107, 62, 38, 0.2)",
+        "ornament": "Double border with inner padding"
+      }
+    },
+    "assets": {
+      "images": {
+        "background_texture": "https://images.unsplash.com/photo-1720264715239-29338d845802?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwzfHxwYXJjaG1lbnQlMjBwYXBlciUyMHRleHR1cmUlMjBhbnRpcXVlfGVufDB8fHx8MTc3MzAzMTM0MXww&ixlib=rb-4.1.0&q=85",
+        "hero_map": "https://images.unsplash.com/photo-1723306009176-b71e9341b2ba?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwxfHx2aW50YWdlJTIwd29ybGQlMjBtYXAlMjBvbGQlMjBwYXBlciUyMHRleHR1cmV8ZW58MHx8fHwxNzczMDMxMzYxfDA&ixlib=rb-4.1.0&q=85",
+        "roman_ruins": "https://images.unsplash.com/photo-1750876420576-478e1b595eb1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwxfHxyb21hbiUyMHJ1aW5zJTIwY29sdW1ucyUyMGFsZ2VyaWElMjB0aW1nYWR8ZW58MHx8fHwxNzczMDMxMzYyfDA&ixlib=rb-4.1.0&q=85",
+        "sahara_dunes": "https://images.unsplash.com/photo-1548364504-57247d6f96bb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwxfHxzYWhhcmElMjBkZXNlcnQlMjBkdW5lcyUyMGdvbGRlbiUyMGhvdXJ8ZW58MHx8fHwxNzczMDMxMzYzfDA&ixlib=rb-4.1.0&q=85",
+        "pattern_islamic": "https://images.unsplash.com/photo-1762786924487-054972e91810?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxNzV8MHwxfHNlYXJjaHwzfHxpc2xhbWljJTIwZ2VvbWV0cmljJTIwcGF0dGVybiUyMHNlYW1sZXNzJTIwZ29sZCUyMGJsdWV8ZW58MHx8fHwxNzczMDMxMzUwfDA&ixlib=rb-4.1.0&q=85",
+        "portrait_placeholder": "https://images.unsplash.com/photo-1696579178907-e409169e33bd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHw0fHx2aW50YWdlJTIwYXJhYmlhbiUyMHBvcnRyYWl0JTIwZW5ncmF2aW5nfGVufDB8fHx8MTc3MzAzMTM2NHww&ixlib=rb-4.1.0&q=85"
+      },
+      "icons": "Use Lucide React with thin stroke width (1.5px) and 'ink' color."
+    }
+  },
+  "components": {
+    "universal_guidelines": [
+      "No rounded corners on main containers. Use clip-path: polygon(...) for torn paper edges if possible, or strict 0px radius.",
+      "All Cards must have a subtle paper texture overlay.",
+      "Use 'ink' color for text, never pure black.",
+      "Buttons should look like wax seals or engraved plates.",
+      "Scrollbars must be custom styled (thin, gold/earth colors)."
+    ],
+    "specific_components": {
+      "timeline": {
+        "type": "Horizontal Scroll",
+        "style": "Continuous line with nodes",
+        "node_style": "Circle with gold border, filled with map detail"
+      },
+      "drawer": {
+        "position": "right",
+        "width": "420px",
+        "background": "bg-parchment",
+        "border": "border-l-4 border-gold",
+        "shadow": "shadow-2xl"
+      },
+      "map": {
+        "library": "SVG (Custom)",
+        "style": "Sepia tone, hand-drawn stroke effect"
+      },
+      "search": {
+        "style": "Full width overlay",
+        "animation": "Fade in with blur",
+        "input_style": "Transparent background, massive serif font"
+      }
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. UPDATE TAILWIND CONFIG: Add the custom colors and fonts immediately.",
+    "2. ADD FONTS: Import the Google Fonts in index.html or CSS.",
+    "3. GLOBAL CSS: Add the parchment texture to the body background with blend mode.",
+    "4. COMPONENTS: Modify Shadcn components to remove 'rounded-md' and add custom borders.",
+    "5. DATA: Create a 'data.js' file to mock the encyclopedia content (do not leave empty).",
+    "6. USE IMAGES: Use the provided image URLs for specific sections.",
+    "7. NO PLACEHOLDERS: If an image is missing, use the 'pattern_islamic' or 'background_texture' as fallback.",
+    "8. ANIMATION: Use framer-motion for all interactions. Page transitions should be slow fades (0.5s).",
+    "9. ACCESSIBILITY: Ensure text contrast on the parchment background is sufficient (use 'ink' color)."
+  ]
+}
