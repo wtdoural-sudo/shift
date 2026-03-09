@@ -67,3 +67,14 @@ Créer une application web encyclopédique illustrée sur l'histoire de l'Algér
 3. Créer des cartes par période historique
 4. Implémenter un système de commentaires/contributions
 5. Ajouter des sources bibliographiques détaillées par fiche
+
+### Update December 2024 - Quiz Feature Added
+
+#### Quiz Historique - Implemented
+- **20 questions** couvrant 4 catégories : Personnages, Villes & Sites, Périodes, Culture
+- **3 niveaux de difficulté** : Facile, Moyen, Difficile
+- **Timer de 30 secondes** par question
+- **Feedback immédiat** avec explication après chaque réponse
+- **Lien "En savoir plus"** vers les fiches de l'encyclopédie
+- **Score final** avec message personnalisé selon le pourcentage
+- **Filtres** par catégorie et difficulté avant de commencer

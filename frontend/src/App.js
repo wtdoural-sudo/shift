@@ -18,6 +18,7 @@ import ArtsPage from './components/ArtsPage';
 import FrisesPage from './components/FrisesPage';
 import GlossairePage from './components/GlossairePage';
 import BibliographiePage from './components/BibliographiePage';
+import QuizPage from './components/QuizPage';
 
 const MainContent = () => {
   const { activeSection } = useApp();
@@ -42,6 +43,8 @@ const MainContent = () => {
         return <FrisesPage />;
       case 'glossaire':
         return <GlossairePage />;
+      case 'quiz':
+        return <QuizPage />;
       case 'bibliographie':
         return <BibliographiePage />;
       default:

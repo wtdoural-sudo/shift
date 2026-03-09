@@ -10,7 +10,7 @@ const navItems = [
   { id: 'villes', label: 'Villes', icon: Building2 },
   { id: 'personnages', label: 'Personnages', icon: User },
   { id: 'arts', label: 'Arts', icon: Palette },
-  { id: 'frises', label: 'Frises', icon: Scroll },
+  { id: 'quiz', label: 'Quiz', icon: BookOpen },
   { id: 'glossaire', label: 'Glossaire', icon: BookOpen },
 ];
 

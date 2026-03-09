@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Map, Users, Building2, User, Palette, Scroll, BookOpen, Library } from 'lucide-react';
+import { Clock, Map, Users, Building2, User, Palette, Scroll, BookOpen, Library, HelpCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Timeline from './Timeline';
 import { PERSONNAGES, PERIODES } from '../data/encyclopediaData';
@@ -48,11 +48,11 @@ const sectionCards = [
     color: '#2E1A6B'
   },
   { 
-    id: 'frises', 
-    label: 'Frises Chronologiques', 
-    icon: Scroll, 
-    description: 'Visualisez l\'enchaînement des époques et des événements.',
-    color: '#C4A35A'
+    id: 'quiz', 
+    label: 'Quiz Historique', 
+    icon: HelpCircle, 
+    description: 'Testez vos connaissances sur l\'histoire de l\'Algérie !',
+    color: '#B8860B'
   },
   { 
     id: 'glossaire', 
